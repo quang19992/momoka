@@ -5,7 +5,7 @@ pub struct Query;
 
 #[juniper::graphql_object(Context = Context)]
 impl Query {
-    async fn empty(_ctx: &Context) -> FieldResult<bool> {
+    async fn health_check(_ctx: &Context) -> FieldResult<bool> {
         Ok(true)
     }
 }
