@@ -1,4 +1,4 @@
-use super::{mutation::Mutation, query::Query, context::Context};
+use super::{context::Context, mutation::Mutation, query::Query};
 use juniper::{self, EmptySubscription};
 
 pub type Schema = juniper::RootNode<'static, Query, Mutation, EmptySubscription<Context>>;

@@ -7,6 +7,6 @@ impl juniper::Context for Context {}
 
 impl Context {
     pub fn new() -> Self {
-        Self { }
+        Self {}
     }
 }
