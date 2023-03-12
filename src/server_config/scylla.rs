@@ -1,5 +1,5 @@
-use std::result::Result;
 use super::{EnvParseError, ServerConfig};
+use std::result::Result;
 
 const SCYLLA_URI: &str = "SCYLLA_URI";
 const SCYLLA_USER: &str = "SCYLLA_USER";
@@ -15,9 +15,9 @@ pub struct ScyllaConfig {
 impl ScyllaConfig {
     pub fn load() -> Result<ScyllaConfig, EnvParseError> {
         Ok(Self {
-            uri: ServerConfig::get_str(SCYLLA_URI),
-            user: ServerConfig::get_str(SCYLLA_USER),
-            password: ServerConfig::get_str(SCYLLA_PASSWORD),
+            uri: ServerConfig::get_str(SCYLLA_URI).unwrap_or("".to_string()),
+            user: ServerConfig::get_str(SCYLLA_USER).unwrap_or("".to_string()),
+            password: ServerConfig::get_str(SCYLLA_PASSWORD).unwrap_or("".to_string()),
         })
     }
 
