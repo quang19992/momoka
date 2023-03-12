@@ -1,4 +1,8 @@
 use std::{env, result::Result};
+use crate::server_config::database::DatabaseConfig;
+
+pub mod database;
+pub mod scylla;
 
 const RUST_ENV: &str = "RUST_ENV";
 const RUST_LOG: &str = "RUST_LOG";
@@ -10,6 +14,7 @@ pub struct ServerConfig {
     pub is_production: bool,
     pub http_port: u16,
     pub num_worker: usize,
+    pub database: DatabaseConfig,
 }
 
 #[derive(Clone, Debug)]
@@ -18,14 +23,14 @@ pub enum EnvParseError {
 }
 
 impl ServerConfig {
-    fn get_str(key: &str) -> String {
+    pub fn get_str(key: &str) -> String {
         match env::var(key) {
             Ok(val) => val,
             Err(_) => "".to_string(),
         }
     }
 
-    fn get_num<T: std::str::FromStr>(key: &str) -> Result<T, EnvParseError> {
+    pub fn get_num<T: std::str::FromStr>(key: &str) -> Result<T, EnvParseError> {
         match key.parse::<T>() {
             Ok(num) => Ok(num),
             Err(_) => Err(EnvParseError::InvalidNumber),
@@ -53,6 +58,7 @@ impl ServerConfig {
             is_production: false,
             http_port,
             num_worker,
+            database: DatabaseConfig::load()?,
         })
     }
 }
