@@ -4,7 +4,7 @@ use scylla::{Session, SessionBuilder};
 use std::result::Result;
 
 pub struct ScyllaWrapper {
-    session: Session,
+    pub session: Session,
 }
 
 impl ScyllaWrapper {

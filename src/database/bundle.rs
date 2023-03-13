@@ -3,7 +3,7 @@ use crate::server_config::database::DatabaseConfig;
 use std::result::Result;
 
 pub struct Database {
-    scylla: ScyllaWrapper,
+    pub scylla: ScyllaWrapper,
 }
 
 impl Database {
