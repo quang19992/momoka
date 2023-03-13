@@ -22,6 +22,6 @@ impl ScyllaConfig {
     }
 
     pub fn had_auth(&self) -> bool {
-        self.user == "" && self.password == ""
+        self.user != "" && self.password != ""
     }
 }
