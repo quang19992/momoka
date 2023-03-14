@@ -9,7 +9,9 @@ pub struct ScyllaWrapper {
 
 impl ScyllaWrapper {
     pub async fn new(config: &ScyllaConfig) -> Result<Self, DatabaseError> {
-        let builder: SessionBuilder = SessionBuilder::new().known_node(&config.uri);
+        let builder: SessionBuilder = SessionBuilder::new()
+            .known_node(&config.uri)
+            .use_keyspace(&config.keyspace, true);
         let builder = if config.had_auth() {
             builder.user(&config.user, &config.password)
         } else {

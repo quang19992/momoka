@@ -20,6 +20,7 @@ pub struct ServerConfig {
 #[derive(Clone, Debug)]
 pub enum EnvParseError {
     KeyNotFound(String),
+    KeyIsEmpty(String),
     InvalidNumber(String, String),
 }
 
