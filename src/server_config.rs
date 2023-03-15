@@ -2,6 +2,7 @@ use crate::server_config::database::DatabaseConfig;
 use std::{env, result::Result, str::FromStr};
 
 pub mod database;
+pub mod manticore;
 pub mod scylla;
 
 const RUST_ENV: &str = "RUST_ENV";
