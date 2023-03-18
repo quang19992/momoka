@@ -3,6 +3,7 @@ use std::{env, result::Result, str::FromStr};
 
 pub mod database;
 pub mod manticore;
+pub mod redis;
 pub mod scylla;
 
 const RUST_ENV: &str = "RUST_ENV";
