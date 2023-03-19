@@ -7,6 +7,7 @@ pub struct CacheWrapper {
     redis: RedisWrapper,
 }
 
+#[derive(Debug)]
 pub enum CacheError {
     DatabaseError(DatabaseError),
     RedisError(RedisError),
@@ -41,19 +42,21 @@ impl CacheWrapper {
         Self { redis }
     }
 
-    pub fn set<K, V>(&self, key: K, value: V, expire: usize) -> Option<CacheError> 
+    pub fn set<K, V>(&self, key: K, value: &V, expire: usize) -> Option<CacheError> 
     where
         K: std::convert::Into<String>,
         V: serde::ser::Serialize,
     {
-        todo!()
+        let cbor = serde_cbor::to_vec(&value).ok()?;
+        self.redis.set(key, cbor, expire)
     }
 
-    pub fn get<'a, K, V>(&self, key: K) -> Result<V, CacheError>
+    pub fn get<K, V>(&self, key: K) -> Result<V, CacheError>
     where
         K: std::convert::Into<String>,
-        V: serde::de::Deserialize<'a>,
+        V: for<'a> serde::de::Deserialize<'a>,
     {
-        todo!()
+        let cbor : Vec<u8> = self.redis.get(key)?;
+        Ok(serde_cbor::de::from_slice::<V>(&cbor[..])?)
     }
 }
