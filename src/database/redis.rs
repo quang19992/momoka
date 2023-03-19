@@ -1,9 +1,9 @@
+use super::cache::{CacheError, CacheModule};
 use super::error::DatabaseError;
-use super::cache::{CacheModule, CacheError};
 use crate::server_config::redis::RedisConfig;
 use r2d2::{Error, Pool, PooledConnection};
-use r2d2_redis::{r2d2, RedisConnectionManager, redis};
-use std::{sync::Arc, convert::Into, ops::DerefMut};
+use r2d2_redis::{r2d2, redis, RedisConnectionManager};
+use std::{convert::Into, ops::DerefMut, sync::Arc};
 
 pub struct RedisWrapper {
     pub pool: Arc<Pool<RedisConnectionManager>>,

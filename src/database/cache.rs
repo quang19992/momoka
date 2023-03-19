@@ -1,7 +1,7 @@
-use super::{redis::RedisWrapper, error::DatabaseError};
-use std::convert;
+use super::{error::DatabaseError, redis::RedisWrapper};
 use r2d2_redis::redis::RedisError;
 use serde_cbor::Error as SerdeCborError;
+use std::convert;
 
 pub struct CacheWrapper {
     redis: RedisWrapper,
@@ -42,7 +42,7 @@ impl CacheWrapper {
         Self { redis }
     }
 
-    pub fn set<K, V>(&self, key: K, value: &V, expire: usize) -> Option<CacheError> 
+    pub fn set<K, V>(&self, key: K, value: &V, expire: usize) -> Option<CacheError>
     where
         K: std::convert::Into<String>,
         V: serde::ser::Serialize,
@@ -56,7 +56,7 @@ impl CacheWrapper {
         K: std::convert::Into<String>,
         V: for<'a> serde::de::Deserialize<'a>,
     {
-        let cbor : Vec<u8> = self.redis.get(key)?;
+        let cbor: Vec<u8> = self.redis.get(key)?;
         Ok(serde_cbor::de::from_slice::<V>(&cbor[..])?)
     }
 }
