@@ -25,10 +25,15 @@ impl RedisWrapper {
 }
 
 impl CacheModule for RedisWrapper {
-    fn set<K: Into<String>>(&self, key: K, value: Vec<u8>, expire: usize) -> Option<CacheError> {
-        let mut conn = self.conn().ok()?;
+    fn set<K: Into<String>>(
+        &self,
+        key: K,
+        value: Vec<u8>,
+        expire: usize,
+    ) -> Result<(), CacheError> {
+        let mut conn = self.conn()?;
         redis::Cmd::pset_ex(Into::<String>::into(key), value, expire).execute(conn.deref_mut());
-        None
+        Ok(())
     }
 
     fn get<K: Into<String>>(&self, key: K) -> Result<Vec<u8>, CacheError> {

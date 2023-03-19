@@ -33,7 +33,8 @@ impl convert::From<SerdeCborError> for CacheError {
 }
 
 pub trait CacheModule {
-    fn set<K: Into<String>>(&self, key: K, value: Vec<u8>, expire: usize) -> Option<CacheError>;
+    fn set<K: Into<String>>(&self, key: K, value: Vec<u8>, expire: usize)
+        -> Result<(), CacheError>;
     fn get<K: Into<String>>(&self, key: K) -> Result<Vec<u8>, CacheError>;
 }
 
@@ -42,12 +43,12 @@ impl CacheWrapper {
         Self { redis }
     }
 
-    pub fn set<K, V>(&self, key: K, value: &V, expire: usize) -> Option<CacheError>
+    pub fn set<K, V>(&self, key: K, value: &V, expire: usize) -> Result<(), CacheError>
     where
         K: std::convert::Into<String>,
         V: serde::ser::Serialize,
     {
-        let cbor = serde_cbor::to_vec(&value).ok()?;
+        let cbor = serde_cbor::to_vec(&value)?;
         self.redis.set(key, cbor, expire)
     }
 
