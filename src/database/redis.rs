@@ -2,8 +2,8 @@ use super::error::DatabaseError;
 use super::cache::{CacheModule, CacheError};
 use crate::server_config::redis::RedisConfig;
 use r2d2::{Error, Pool, PooledConnection};
-use r2d2_redis::{r2d2, RedisConnectionManager};
-use std::sync::Arc;
+use r2d2_redis::{r2d2, RedisConnectionManager, redis};
+use std::{sync::Arc, convert::Into, ops::DerefMut};
 
 pub struct RedisWrapper {
     pub pool: Arc<Pool<RedisConnectionManager>>,
@@ -26,10 +26,13 @@ impl RedisWrapper {
 
 impl CacheModule for RedisWrapper {
     fn set<K: Into<String>>(&self, key: K, value: Vec<u8>, expire: usize) -> Option<CacheError> {
-        todo!()
+        let mut conn = self.conn().ok()?;
+        redis::Cmd::pset_ex(Into::<String>::into(key), value, expire).execute(conn.deref_mut());
+        None
     }
 
     fn get<K: Into<String>>(&self, key: K) -> Result<Vec<u8>, CacheError> {
-        todo!()
+        let mut conn = self.conn()?;
+        Ok(redis::Cmd::get(Into::<String>::into(key)).query(conn.deref_mut())?)
     }
 }
