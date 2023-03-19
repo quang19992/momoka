@@ -1,4 +1,5 @@
 use super::error::DatabaseError;
+use super::cache::{CacheModule, CacheError};
 use crate::server_config::redis::RedisConfig;
 use r2d2::{Error, Pool, PooledConnection};
 use r2d2_redis::{r2d2, RedisConnectionManager};
@@ -20,5 +21,15 @@ impl RedisWrapper {
     pub fn conn(&self) -> Result<PooledConnection<RedisConnectionManager>, DatabaseError> {
         let pool = self.pool.clone();
         Ok(pool.get()?)
+    }
+}
+
+impl CacheModule for RedisWrapper {
+    fn set<K: Into<String>>(&self, key: K, value: Vec<u8>, expire: usize) -> Option<CacheError> {
+        todo!()
+    }
+
+    fn get<K: Into<String>>(&self, key: K) -> Result<Vec<u8>, CacheError> {
+        todo!()
     }
 }
