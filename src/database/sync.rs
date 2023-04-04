@@ -6,12 +6,12 @@ use std::{future::Future, result::Result, sync::Arc};
 type SyncResponse = Result<(), DatabaseError>;
 
 struct SyncFn {
-    function: Box<dyn Fn(Database) -> BoxFuture<'static, SyncResponse>>,
+    function: Box<dyn Fn(Arc<Database>) -> BoxFuture<'static, SyncResponse>>,
 }
 
 impl SyncFn {
     fn new<F: Future<Output = SyncResponse> + std::marker::Send + 'static>(
-        function: fn(Database) -> F,
+        function: fn(Arc<Database>) -> F,
     ) -> Self {
         Self {
             function: Box::new(move |database| Box::pin(function(database))),
@@ -58,7 +58,7 @@ impl Synchronizer<'_> {
     }
 
     async fn execute_custom_sync<'a>(bundle: Arc<Database>, function: &'a SyncFn) -> SyncResponse {
-        todo!()
+        (function.function)(bundle).await
     }
 
     async fn execute_mixed_sync<'a, T: SyncSupport + std::marker::Copy>(
