@@ -20,7 +20,7 @@ impl SyncFn {
 }
 
 trait SyncSupport {
-    fn execute<T>(query: &str, params: T) -> SyncResponse;
+    fn execute(query: &str) -> SyncResponse;
 }
 
 // TODO - implement this
