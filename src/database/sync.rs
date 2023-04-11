@@ -74,12 +74,9 @@ impl Synchronizer<'_> {
         _state: Option<SyncState>,
     ) -> SyncResponse {
         for synchronizer in synchronizers.iter() {
-            if let Err(err) = synchronizer
+            synchronizer
                 .execute(bundle.clone(), database.clone(), None)
-                .await
-            {
-                return Err(err);
-            }
+                .await?;
         }
         Ok(())
     }
