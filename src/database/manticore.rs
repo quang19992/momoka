@@ -1,6 +1,10 @@
-use super::error::DatabaseError;
+use super::{
+    error::DatabaseError,
+    sync::{SyncResponse, SyncSupport},
+};
 use crate::server_config::manticore::ManticoreConfig;
-use mysql::OptsBuilder;
+use mysql::{prelude::*, OptsBuilder};
+
 use r2d2::{Error, Pool, PooledConnection};
 use r2d2_mysql::MySqlConnectionManager;
 use std::sync::Arc;
@@ -35,5 +39,12 @@ impl ManticoreWrapper {
     pub fn conn(&self) -> Result<PooledConnection<MySqlConnectionManager>, DatabaseError> {
         let pool = self.pool.clone();
         Ok(pool.get()?)
+    }
+}
+
+impl SyncSupport for ManticoreWrapper {
+    fn execute(&self, query: &str) -> SyncResponse {
+        self.conn()?.query_drop(query)?;
+        Ok(())
     }
 }
