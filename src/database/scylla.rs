@@ -1,4 +1,7 @@
-use super::{error::DatabaseError, sync::{SyncSupport, SyncResponse}};
+use super::{
+    error::DatabaseError,
+    sync::{SyncResponse, SyncSupport},
+};
 use crate::server_config::scylla::ScyllaConfig;
 use scylla::{Session, SessionBuilder};
 use std::result::Result;
