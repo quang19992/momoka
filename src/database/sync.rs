@@ -3,6 +3,8 @@ use async_recursion::async_recursion;
 use futures::future::BoxFuture;
 use std::{future::Future, result::Result, sync::Arc};
 
+const QUERY_BATCH_SIZE: usize = 10;
+
 type SyncResponse = Result<(), DatabaseError>;
 
 struct SyncFn {
@@ -20,7 +22,7 @@ impl SyncFn {
 }
 
 trait SyncSupport {
-    fn execute(query: &str) -> SyncResponse;
+    fn execute(&self, query: &str) -> SyncResponse;
 }
 
 // TODO - implement this
@@ -38,7 +40,7 @@ impl Synchronizer<'_> {
     async fn execute<T: SyncSupport + std::marker::Copy>(
         &self,
         bundle: Arc<Database>,
-        database: T,
+        database: Arc<T>,
         state: Option<SyncState>,
     ) -> SyncResponse {
         match self {
@@ -51,10 +53,14 @@ impl Synchronizer<'_> {
     }
 
     async fn execute_simple_sync<'a, T: SyncSupport>(
-        database: T,
+        database: Arc<T>,
         queries: &'a [&'a str],
     ) -> SyncResponse {
-        todo!()
+        let mut iter = queries.chunks(QUERY_BATCH_SIZE);
+        while let Some(batch) = iter.next() {
+            Self::execute_batch_query(database.clone(), batch).await?;
+        }
+        Ok(())
     }
 
     async fn execute_custom_sync<'a>(bundle: Arc<Database>, function: &'a SyncFn) -> SyncResponse {
@@ -64,14 +70,34 @@ impl Synchronizer<'_> {
     async fn execute_mixed_sync<'a, T: SyncSupport + std::marker::Copy>(
         synchronizers: &'a [&'a Self],
         bundle: Arc<Database>,
-        database: T,
+        database: Arc<T>,
         _state: Option<SyncState>,
     ) -> SyncResponse {
         for synchronizer in synchronizers.iter() {
-            if let Err(err) = synchronizer.execute(bundle.clone(), database, None).await {
+            if let Err(err) = synchronizer
+                .execute(bundle.clone(), database.clone(), None)
+                .await
+            {
                 return Err(err);
             }
         }
         Ok(())
+    }
+
+    async fn execute_batch_query<'a, T: SyncSupport>(
+        database: Arc<T>,
+        queries: &'a [&'a str],
+    ) -> SyncResponse {
+        futures::future::try_join_all(
+            queries
+                .into_iter()
+                .map(|query| Self::execute_query(database.clone(), query)),
+        )
+        .await?;
+        Ok(())
+    }
+
+    async fn execute_query<'a, T: SyncSupport>(database: Arc<T>, query: &'a str) -> SyncResponse {
+        database.execute(query)
     }
 }
