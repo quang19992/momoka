@@ -5,14 +5,15 @@ use std::{future::Future, result::Result, sync::Arc};
 
 const QUERY_BATCH_SIZE: usize = 10;
 
-type SyncResponse = Result<(), DatabaseError>;
+pub type SyncResponse = Result<(), DatabaseError>;
 
-struct SyncFn {
-    function: Box<dyn Fn(Arc<Database>) -> BoxFuture<'static, SyncResponse>>,
+pub struct SyncFn {
+    pub function: Box<dyn Fn(Arc<Database>) -> BoxFuture<'static, SyncResponse>>,
 }
 
 impl SyncFn {
-    fn new<F: Future<Output = SyncResponse> + std::marker::Send + 'static>(
+    #[allow(unused)]
+    pub fn new<F: Future<Output = SyncResponse> + std::marker::Send + 'static>(
         function: fn(Arc<Database>) -> F,
     ) -> Self {
         Self {
@@ -21,23 +22,25 @@ impl SyncFn {
     }
 }
 
-trait SyncSupport {
+pub trait SyncSupport {
     fn execute(&self, query: &str) -> SyncResponse;
 }
 
 // TODO - implement this
 // this will help in case of a sync failure
-struct SyncState;
+pub struct SyncState;
 
-enum Synchronizer<'a> {
+#[allow(unused)]
+pub enum Synchronizer<'a> {
     Simple(&'a [&'a str]),
     Custom(&'a SyncFn),
     Mixed(Arc<&'a [&'a Synchronizer<'a>]>),
 }
 
 impl Synchronizer<'_> {
+    #[allow(unused)]
     #[async_recursion(?Send)]
-    async fn execute<T: SyncSupport + std::marker::Copy>(
+    pub async fn execute<T: SyncSupport + std::marker::Copy>(
         &self,
         bundle: Arc<Database>,
         database: Arc<T>,
