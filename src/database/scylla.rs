@@ -1,4 +1,4 @@
-use super::error::DatabaseError;
+use super::{error::DatabaseError, sync::{SyncSupport, SyncResponse}};
 use crate::server_config::scylla::ScyllaConfig;
 use scylla::{Session, SessionBuilder};
 use std::result::Result;
@@ -20,5 +20,12 @@ impl ScyllaWrapper {
         Ok(Self {
             session: builder.build().await?,
         })
+    }
+}
+
+impl SyncSupport for ScyllaWrapper {
+    fn execute(&self, query: &str) -> SyncResponse {
+        futures::executor::block_on(self.session.query(query, &[]))?;
+        Ok(())
     }
 }
