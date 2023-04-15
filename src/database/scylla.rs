@@ -3,7 +3,7 @@ use super::{
     sync::{SyncResponse, SyncSupport},
 };
 use crate::server_config::scylla::ScyllaConfig;
-use scylla::{Session, SessionBuilder};
+use scylla::{IntoTypedRows, Session, SessionBuilder};
 use std::result::Result;
 
 pub struct ScyllaWrapper {
@@ -23,6 +23,21 @@ impl ScyllaWrapper {
         Ok(Self {
             session: builder.build().await?,
         })
+    }
+
+    pub async fn get_schema_version(&self, target: &str) -> Result<Option<i64>, DatabaseError> {
+        const VERSION_QUERY: &str =
+            "SELECT source, schema_version FROM sync_data WHERE source = ?;";
+        let rows = self.session.query(VERSION_QUERY, vec![target]).await?.rows;
+        let rows = match rows {
+            Some(rows) => rows,
+            None => return Ok(None),
+        };
+        for row in rows.into_typed::<(String, i64)>() {
+            let (_, version): (String, i64) = row?;
+            return Ok(Some(version));
+        }
+        Ok(None)
     }
 }
 
