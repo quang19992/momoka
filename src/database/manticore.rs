@@ -43,6 +43,10 @@ impl ManticoreWrapper {
 }
 
 impl SyncSupport for ManticoreWrapper {
+    fn schema_version(&self) -> Result<Option<i64>, DatabaseError> {
+        todo!()
+    }
+
     fn execute(&self, query: &str) -> SyncResponse {
         self.conn()?.query_drop(query)?;
         Ok(())

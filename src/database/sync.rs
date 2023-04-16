@@ -23,6 +23,7 @@ impl SyncFn {
 }
 
 pub trait SyncSupport {
+    fn schema_version(&self) -> Result<Option<i64>, DatabaseError>;
     fn execute(&self, query: &str) -> SyncResponse;
 }
 
