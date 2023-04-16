@@ -23,4 +23,9 @@ impl Database {
             cache: CacheWrapper::new(polls.2?),
         })
     }
+
+    pub async fn sync(&self) -> Result<(), DatabaseError> {
+        log::debug!("Started schema synchronization job");
+        Ok(())
+    }
 }

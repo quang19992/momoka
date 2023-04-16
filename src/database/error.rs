@@ -3,14 +3,14 @@ use scylla::{
     cql_to_rust::FromRowError as ScyllaFromRowError,
     transport::errors::{NewSessionError, QueryError as ScyllaQueryError},
 };
-use std::{convert, rc::Rc};
+use std::{convert, sync::Arc};
 
 #[derive(Clone, Debug)]
 pub enum DatabaseError {
     ScyllaError(NewSessionError),
     ScyllaQueryError(ScyllaQueryError),
     ScyllaFromRowError(ScyllaFromRowError),
-    MysqlError(Rc<MysqlError>),
+    MysqlError(Arc<MysqlError>),
     R2d2Error(String),
 }
 
@@ -34,7 +34,7 @@ impl convert::From<ScyllaFromRowError> for DatabaseError {
 
 impl convert::From<MysqlError> for DatabaseError {
     fn from(err: MysqlError) -> Self {
-        DatabaseError::MysqlError(Rc::new(err))
+        DatabaseError::MysqlError(Arc::new(err))
     }
 }
 
