@@ -102,3 +102,26 @@ impl Synchronizer<'_> {
         database.execute(query)
     }
 }
+
+pub async fn execute<T: SyncSupport + std::marker::Copy>(
+    synchronizers: Arc<Vec<&Synchronizer<'_>>>,
+    bundle: Arc<Database>,
+    database: Arc<T>,
+) -> SyncResponse {
+    if synchronizers.is_empty() {
+        return Ok(());
+    }
+
+    let current_version = match database.clone().schema_version()? {
+        None => {
+            synchronizers[0].execute(bundle.clone(), database.clone(), None).await?;
+            return Ok(());
+        },
+        Some(version) => version,
+    };
+
+    for i in (current_version as usize)..synchronizers.len() {
+        synchronizers[i].execute(bundle.clone(), database.clone(), None).await?;
+    }
+    Ok(())
+}
