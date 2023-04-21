@@ -64,6 +64,17 @@ impl SyncSupport for ScyllaWrapper {
         Ok(None)
     }
 
+    fn set_schema_version(&self, version: i64) -> SyncResponse {
+        const VERSION_FIELD: &str = "schema_version";
+        const VERSION_QUERY: &str = "UPDATE sync_data SET value = ? WHERE field = ?;";
+        let _ = tokio::task::block_in_place(move || {
+            tokio::runtime::Handle::current().block_on(async move {
+                self.session.query(VERSION_QUERY, (version, VERSION_FIELD)).await
+            })
+        })?;
+        Ok(())
+    }
+
     fn execute(&self, query: &str) -> SyncResponse {
         tokio::task::block_in_place(move || {
             tokio::runtime::Handle::current()

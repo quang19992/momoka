@@ -47,6 +47,10 @@ impl SyncSupport for ManticoreWrapper {
         todo!()
     }
 
+    fn set_schema_version(&self, version: i64) -> SyncResponse {
+        todo!()
+    }
+
     fn execute(&self, query: &str) -> SyncResponse {
         self.conn()?.query_drop(query)?;
         Ok(())

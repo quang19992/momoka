@@ -24,6 +24,7 @@ impl SyncFn {
 
 pub trait SyncSupport {
     fn schema_version(&self) -> Result<Option<i64>, DatabaseError>;
+    fn set_schema_version(&self, version: i64) -> Result<(), DatabaseError>;
     fn execute(&self, query: &str) -> SyncResponse;
 }
 
