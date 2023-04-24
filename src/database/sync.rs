@@ -115,15 +115,21 @@ pub async fn execute<T: SyncSupport + std::marker::Copy>(
 
     let current_version = match database.clone().schema_version()? {
         None => {
-            synchronizers[0].execute(bundle.clone(), database.clone(), None).await?;
-            database.clone().set_schema_version(synchronizers.len() as i64 - 1)?;
+            synchronizers[0]
+                .execute(bundle.clone(), database.clone(), None)
+                .await?;
+            database
+                .clone()
+                .set_schema_version(synchronizers.len() as i64 - 1)?;
             return Ok(());
-        },
+        }
         Some(version) => version,
     };
 
     for i in (current_version as usize)..synchronizers.len() {
-        synchronizers[i].execute(bundle.clone(), database.clone(), None).await?;
+        synchronizers[i]
+            .execute(bundle.clone(), database.clone(), None)
+            .await?;
         database.clone().set_schema_version(i as i64)?;
     }
     Ok(())

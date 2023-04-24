@@ -69,7 +69,9 @@ impl SyncSupport for ScyllaWrapper {
         const VERSION_QUERY: &str = "UPDATE sync_data SET value = ? WHERE field = ?;";
         let _ = tokio::task::block_in_place(move || {
             tokio::runtime::Handle::current().block_on(async move {
-                self.session.query(VERSION_QUERY, (version, VERSION_FIELD)).await
+                self.session
+                    .query(VERSION_QUERY, (version, VERSION_FIELD))
+                    .await
             })
         })?;
         Ok(())
