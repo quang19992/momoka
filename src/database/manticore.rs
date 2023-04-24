@@ -59,7 +59,31 @@ pub fn sanitize_param<T: Into<String>>(param: T) -> String {
 
 impl SyncSupport for ManticoreWrapper {
     fn schema_version(&self) -> Result<Option<i64>, DatabaseError> {
-        todo!()
+        const NO_TABLE_ERROR: &str = "unknown local table(s)";
+        const VERSION_QUERY: &str = r#"
+            SELECT value 
+            FROM sync_data 
+            WHERE MATCH('@field schema_version')
+        "#;
+
+        let mut conn = self.conn()?;
+        let row: Option<String> = match conn.query_first(VERSION_QUERY) {
+            Err(err) => {
+                if format!("{:?}", err).contains(NO_TABLE_ERROR) {
+                    return Ok(None);
+                }
+                return Err(err.into());
+            },
+            Ok(row) => row,
+        };
+        let version = match row {
+            None => return Ok(None),
+            Some(version) => version,
+        };
+        match version.parse::<i64>() {
+            Err(err) => Err(DatabaseError::Other(format!("{:?}", err))),
+            Ok(version) => Ok(Some(version)),
+        }
     }
 
     fn set_schema_version(&self, version: i64) -> SyncResponse {

@@ -12,6 +12,7 @@ pub enum DatabaseError {
     ScyllaFromRowError(ScyllaFromRowError),
     MysqlError(Arc<MysqlError>),
     R2d2Error(String),
+    Other(String),
 }
 
 impl convert::From<NewSessionError> for DatabaseError {
