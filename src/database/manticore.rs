@@ -9,6 +9,7 @@ use r2d2_mysql::MySqlConnectionManager;
 use std::sync::Arc;
 
 const POOL_MAX_SIZE: u32 = 5;
+const SPECIAL_TOKEN: &'static [(&str, &str)] = &[("\\", "\\\\"), ("'", "\\'"), ("\"", "\\\"")];
 
 pub struct ManticoreWrapper {
     pool: Arc<Pool<MySqlConnectionManager>>,
@@ -43,6 +44,17 @@ impl ManticoreWrapper {
         let pool = self.pool.clone();
         Ok(pool.get()?)
     }
+}
+
+/// @fixme - mid priority
+/// potential SQL-injection? either better sanitizer or
+/// somehow make manticore support prepared statement.
+pub fn sanitize_param<T: Into<String>>(param: T) -> String {
+    let mut sanitized = Into::<String>::into(param);
+    for token in SPECIAL_TOKEN {
+        sanitized = sanitized.replace(token.0, token.1);
+    }
+    sanitized
 }
 
 impl SyncSupport for ManticoreWrapper {
