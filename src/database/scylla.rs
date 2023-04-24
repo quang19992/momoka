@@ -6,6 +6,8 @@ use crate::server_config::scylla::ScyllaConfig;
 use scylla::{transport::errors, IntoTypedRows, Session, SessionBuilder};
 use std::result::Result;
 
+pub mod schema;
+
 pub struct ScyllaWrapper {
     pub session: Session,
 }
