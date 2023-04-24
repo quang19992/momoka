@@ -3,8 +3,7 @@ use super::{
     sync::{SyncResponse, SyncSupport},
 };
 use crate::server_config::manticore::ManticoreConfig;
-use mysql::{prelude::*, OptsBuilder};
-
+use mysql::{prelude::*, Conn, Error as MySqlError, OptsBuilder};
 use r2d2::{Error, Pool, PooledConnection};
 use r2d2_mysql::MySqlConnectionManager;
 use std::sync::Arc;
@@ -14,6 +13,10 @@ const POOL_MAX_SIZE: u32 = 5;
 pub struct ManticoreWrapper {
     pool: Arc<Pool<MySqlConnectionManager>>,
     pub prefix: String,
+}
+
+fn healthcheck(_: MySqlConnectionManager, conn: &mut Conn) -> Result<(), MySqlError> {
+    conn.query("SELECT 1").map(|_: Vec<String>| ())
 }
 
 impl ManticoreWrapper {
@@ -28,7 +31,7 @@ impl ManticoreWrapper {
         } else {
             builder
         };
-        let manager = MySqlConnectionManager::new(builder);
+        let manager = MySqlConnectionManager::with_custom_healthcheck(builder, &healthcheck);
         let pool = Pool::builder().max_size(POOL_MAX_SIZE).build(manager)?;
         Ok(Self {
             pool: Arc::new(pool),
