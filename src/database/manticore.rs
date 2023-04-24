@@ -73,7 +73,7 @@ impl SyncSupport for ManticoreWrapper {
                     return Ok(None);
                 }
                 return Err(err.into());
-            },
+            }
             Ok(row) => row,
         };
         let version = match row {
@@ -87,7 +87,22 @@ impl SyncSupport for ManticoreWrapper {
     }
 
     fn set_schema_version(&self, version: i64) -> SyncResponse {
-        todo!()
+        let mut conn = self.conn()?;
+        match self.schema_version()? {
+            None => {
+                conn.query_drop(format!(
+                    "INSERT INTO sync_data (field, value) VALUES ('{}', '{}')",
+                    "schema_version", version
+                ))?;
+            }
+            Some(_) => {
+                conn.query_drop(format!(
+                    "UPDATE sync_data SET value = '{}' WHERE MATCH('@field {}')",
+                    version, "schema_version"
+                ))?;
+            }
+        };
+        Ok(())
     }
 
     fn execute(&self, query: &str) -> SyncResponse {
