@@ -70,7 +70,7 @@ impl SyncSupport for ScyllaWrapper {
         let _ = tokio::task::block_in_place(move || {
             tokio::runtime::Handle::current().block_on(async move {
                 self.session
-                    .query(VERSION_QUERY, (version, VERSION_FIELD))
+                    .query(VERSION_QUERY, (format!("{}", version), VERSION_FIELD))
                     .await
             })
         })?;
