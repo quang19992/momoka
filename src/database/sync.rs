@@ -7,8 +7,9 @@ const QUERY_BATCH_SIZE: usize = 10;
 
 pub type SyncResponse = Result<(), DatabaseError>;
 
+#[derive(Clone)]
 pub struct SyncFn {
-    pub function: Box<dyn Fn(Arc<Database>) -> BoxFuture<'static, SyncResponse>>,
+    pub function: Arc<dyn Fn(Arc<Database>) -> BoxFuture<'static, SyncResponse> + std::marker::Send + Sync>,
 }
 
 impl SyncFn {
@@ -17,7 +18,7 @@ impl SyncFn {
         function: fn(Arc<Database>) -> F,
     ) -> Self {
         Self {
-            function: Box::new(move |database| Box::pin(function(database))),
+            function: Arc::new(move |database| Box::pin(function(database))),
         }
     }
 }
@@ -33,79 +34,82 @@ pub trait SyncSupport {
 pub struct SyncState;
 
 #[allow(unused)]
-pub enum Synchronizer<'a> {
-    Simple(&'a [&'a str]),
-    Custom(&'a SyncFn),
-    Mixed(Arc<&'a [&'a Synchronizer<'a>]>),
+#[derive(Clone)]
+pub enum Synchronizer {
+    Simple(Vec<String>),
+    Custom(SyncFn),
+    Mixed(Vec<Synchronizer>),
 }
 
-impl Synchronizer<'_> {
+impl Synchronizer {
     #[allow(unused)]
-    #[async_recursion(?Send)]
-    pub async fn execute<T: SyncSupport + std::marker::Copy>(
+    pub fn execute<T: SyncSupport>(
         &self,
         bundle: Arc<Database>,
         database: Arc<T>,
         state: Option<SyncState>,
     ) -> SyncResponse {
-        match self {
-            Synchronizer::Simple(queries) => Self::execute_simple_sync(database, queries).await,
-            Synchronizer::Custom(function) => Self::execute_custom_sync(bundle, function).await,
-            Synchronizer::Mixed(synchronizers) => {
-                Self::execute_mixed_sync(synchronizers, bundle, database, state).await
-            }
-        }
+        tokio::task::block_in_place(move || {
+            tokio::runtime::Handle::current().block_on(async move {
+                match self {
+                    Synchronizer::Simple(queries) => Self::execute_simple_sync(database, queries.to_vec()).await,
+                    Synchronizer::Custom(function) => Self::execute_custom_sync(bundle, function.clone()).await,
+                    Synchronizer::Mixed(synchronizers) => {
+                        Self::execute_mixed_sync(synchronizers.to_vec(), bundle, database, state).await
+                    }
+                }
+            })
+        })
     }
 
-    async fn execute_simple_sync<'a, T: SyncSupport>(
+    async fn execute_simple_sync<T: SyncSupport>(
         database: Arc<T>,
-        queries: &'a [&'a str],
+        queries: Vec<String>,
     ) -> SyncResponse {
         let mut iter = queries.chunks(QUERY_BATCH_SIZE);
         while let Some(batch) = iter.next() {
-            Self::execute_batch_query(database.clone(), batch).await?;
+            Self::execute_batch_query(database.clone(), batch.to_vec()).await?;
         }
         Ok(())
     }
 
-    async fn execute_custom_sync<'a>(bundle: Arc<Database>, function: &'a SyncFn) -> SyncResponse {
+    async fn execute_custom_sync(bundle: Arc<Database>, function: SyncFn) -> SyncResponse {
         (function.function)(bundle).await
     }
 
-    async fn execute_mixed_sync<'a, T: SyncSupport + std::marker::Copy>(
-        synchronizers: &'a [&'a Self],
+    async fn execute_mixed_sync<T: SyncSupport>(
+        synchronizers: Vec<Self>,
         bundle: Arc<Database>,
         database: Arc<T>,
         _state: Option<SyncState>,
     ) -> SyncResponse {
         for synchronizer in synchronizers.iter() {
             synchronizer
-                .execute(bundle.clone(), database.clone(), None)
-                .await?;
+                .execute(bundle.clone(), database.clone(), None)?;
         }
         Ok(())
     }
 
-    async fn execute_batch_query<'a, T: SyncSupport>(
+    async fn execute_batch_query<T: SyncSupport>(
         database: Arc<T>,
-        queries: &'a [&'a str],
+        queries: Vec<String>,
     ) -> SyncResponse {
         futures::future::try_join_all(
             queries
                 .into_iter()
-                .map(|query| Self::execute_query(database.clone(), query)),
+                .map(|query| Self::execute_query(database.clone(), query.clone())),
         )
         .await?;
         Ok(())
     }
 
-    async fn execute_query<'a, T: SyncSupport>(database: Arc<T>, query: &'a str) -> SyncResponse {
-        database.execute(query)
+    async fn execute_query<T: SyncSupport>(database: Arc<T>, query: String) -> SyncResponse {
+        database.execute(&query)
     }
 }
 
-pub async fn execute<T: SyncSupport + std::marker::Copy>(
-    synchronizers: Arc<Vec<&Synchronizer<'_>>>,
+pub async fn execute<T: SyncSupport>(
+    synchronizers: Vec<Synchronizer>,
     bundle: Arc<Database>,
     database: Arc<T>,
 ) -> SyncResponse {
@@ -115,9 +119,9 @@ pub async fn execute<T: SyncSupport + std::marker::Copy>(
 
     let current_version = match database.clone().schema_version()? {
         None => {
-            synchronizers[0]
-                .execute(bundle.clone(), database.clone(), None)
-                .await?;
+            let synchronizer = synchronizers[0].clone();
+            synchronizer
+                .execute(bundle.clone(), database.clone(), None)?;
             database
                 .clone()
                 .set_schema_version(synchronizers.len() as i64 - 1)?;
@@ -127,9 +131,9 @@ pub async fn execute<T: SyncSupport + std::marker::Copy>(
     };
 
     for i in (current_version as usize)..synchronizers.len() {
-        synchronizers[i]
-            .execute(bundle.clone(), database.clone(), None)
-            .await?;
+        let synchronizer = synchronizers[i].clone();
+        synchronizer
+            .execute(bundle.clone(), database.clone(), None)?;
         database.clone().set_schema_version(i as i64)?;
     }
     Ok(())
