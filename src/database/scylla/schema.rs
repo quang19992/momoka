@@ -2,10 +2,7 @@ use crate::database::sync::Synchronizer;
 use std::sync::Arc;
 
 pub fn synchronizers() -> Arc<Vec<Synchronizer>> {
-    Arc::new(vec![
-        master(),
-        v_1(),
-    ])
+    Arc::new(vec![master(), v_1()])
 }
 
 fn master() -> Synchronizer {

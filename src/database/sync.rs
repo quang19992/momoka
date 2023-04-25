@@ -9,7 +9,8 @@ pub type SyncResponse = Result<(), DatabaseError>;
 
 #[derive(Clone)]
 pub struct SyncFn {
-    pub function: Arc<dyn Fn(Arc<Database>) -> BoxFuture<'static, SyncResponse> + std::marker::Send + Sync>,
+    pub function:
+        Arc<dyn Fn(Arc<Database>) -> BoxFuture<'static, SyncResponse> + std::marker::Send + Sync>,
 }
 
 impl SyncFn {
@@ -53,10 +54,15 @@ impl Synchronizer {
         tokio::task::block_in_place(move || {
             tokio::runtime::Handle::current().block_on(async move {
                 match self {
-                    Synchronizer::Simple(queries) => Self::execute_simple_sync(database, queries.to_vec()).await,
-                    Synchronizer::Custom(function) => Self::execute_custom_sync(bundle, function.clone()).await,
+                    Synchronizer::Simple(queries) => {
+                        Self::execute_simple_sync(database, queries.to_vec()).await
+                    }
+                    Synchronizer::Custom(function) => {
+                        Self::execute_custom_sync(bundle, function.clone()).await
+                    }
                     Synchronizer::Mixed(synchronizers) => {
-                        Self::execute_mixed_sync(synchronizers.to_vec(), bundle, database, state).await
+                        Self::execute_mixed_sync(synchronizers.to_vec(), bundle, database, state)
+                            .await
                     }
                 }
             })
@@ -85,8 +91,7 @@ impl Synchronizer {
         _state: Option<SyncState>,
     ) -> SyncResponse {
         for synchronizer in synchronizers.iter() {
-            synchronizer
-                .execute(bundle.clone(), database.clone(), None)?;
+            synchronizer.execute(bundle.clone(), database.clone(), None)?;
         }
         Ok(())
     }
