@@ -23,13 +23,12 @@ async fn main() -> std::io::Result<()> {
 
     let database_clone = database.clone();
     tokio::task::spawn_blocking(|| {
-        let mut rt = tokio::runtime::Runtime::new().unwrap();
+        let rt = tokio::runtime::Runtime::new().unwrap();
         rt.block_on(async move {
-            let _ = tokio::spawn(async move { database::bundle::sync(database_clone).await })
-                .await
-                .unwrap_or_else(|err| panic!("{:?}", err));
-        });
-    });
+            tokio::spawn(async move { database::bundle::sync(database_clone).await })
+                .await.unwrap()
+        }).unwrap_or_else(|err| panic!("{:?}", err));
+    }).await.unwrap();
 
     log::info!("starting server on port {}", config.http_port);
 
