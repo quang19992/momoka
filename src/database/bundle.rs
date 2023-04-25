@@ -3,12 +3,12 @@ use super::{
     scylla::ScyllaWrapper,
 };
 use crate::server_config::database::DatabaseConfig;
-use std::result::Result;
+use std::{result::Result, sync::Arc};
 
 pub struct Database {
-    pub scylla: ScyllaWrapper,
-    pub manticore: ManticoreWrapper,
-    pub cache: CacheWrapper,
+    pub scylla: Arc<ScyllaWrapper>,
+    pub manticore: Arc<ManticoreWrapper>,
+    pub cache: Arc<CacheWrapper>,
 }
 
 impl Database {
@@ -18,9 +18,30 @@ impl Database {
         let redis = RedisWrapper::new(&config.redis);
         let polls = futures::join!(scylla, manticore, redis);
         Ok(Self {
-            scylla: polls.0?,
-            manticore: polls.1?,
-            cache: CacheWrapper::new(polls.2?),
+            scylla: Arc::new(polls.0?),
+            manticore: Arc::new(polls.1?),
+            cache: Arc::new(CacheWrapper::new(polls.2?)),
         })
     }
+}
+
+pub async fn sync(bundle: Arc<Database>) -> Result<(), DatabaseError> {
+    log::info!("Started schema synchronization job");
+    let scylla_synchronizers = super::scylla::schema::synchronizers();
+    let scylla = super::sync::execute(
+        scylla_synchronizers.clone().to_vec(),
+        bundle.clone(),
+        bundle.clone().scylla.clone(),
+    );
+    let manticore_synchronizers = super::manticore::schema::synchronizers();
+    let manticore = super::sync::execute(
+        manticore_synchronizers.clone().to_vec(),
+        bundle.clone(),
+        bundle.clone().manticore.clone(),
+    );
+    let polls = futures::join!(scylla, manticore);
+    polls.0?;
+    polls.1?;
+    log::info!("Schema synchronization job completed");
+    Ok(())
 }
