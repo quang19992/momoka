@@ -43,5 +43,6 @@ pub async fn sync(bundle: Arc<Database>) -> Result<(), DatabaseError> {
     let polls = futures::join!(scylla, manticore);
     polls.0?;
     polls.1?;
+    log::info!("Schema synchronization job completed");
     Ok(())
 }

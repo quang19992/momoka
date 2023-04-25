@@ -29,6 +29,10 @@ impl ScyllaWrapper {
 }
 
 impl SyncSupport for ScyllaWrapper {
+    fn name(&self) -> String {
+        "scylla".to_owned()
+    }
+
     fn schema_version(&self) -> Result<Option<i64>, DatabaseError> {
         const VERSION_FIELD: &str = "schema_version";
         const VERSION_QUERY: &str = "SELECT value FROM sync_data WHERE field = ?;";

@@ -60,6 +60,10 @@ pub fn sanitize_param<T: Into<String>>(param: T) -> String {
 }
 
 impl SyncSupport for ManticoreWrapper {
+    fn name(&self) -> String {
+        "manticore".to_owned()
+    }
+
     fn schema_version(&self) -> Result<Option<i64>, DatabaseError> {
         const NO_TABLE_ERROR: &str = "unknown local table(s)";
         const VERSION_QUERY: &str = r#"

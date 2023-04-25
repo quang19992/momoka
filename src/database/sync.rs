@@ -24,6 +24,7 @@ impl SyncFn {
 }
 
 pub trait SyncSupport {
+    fn name(&self) -> String;
     fn schema_version(&self) -> Result<Option<i64>, DatabaseError>;
     fn set_schema_version(&self, version: i64) -> Result<(), DatabaseError>;
     fn execute(&self, query: &str) -> SyncResponse;
@@ -119,23 +120,36 @@ pub async fn execute<T: SyncSupport>(
 
     let current_version = match database.clone().schema_version()? {
         None => {
+            log::debug!("[{}] starting master synchronizer", database.clone().name());
             let synchronizer = synchronizers[0].clone();
-            synchronizer
-                .execute(bundle.clone(), database.clone(), None)?;
+            synchronizer.execute(bundle.clone(), database.clone(), None)?;
             database
                 .clone()
                 .set_schema_version(synchronizers.len() as i64 - 1)?;
+            log::debug!(
+                "[{}] schema now in sync with master schema",
+                database.clone().name()
+            );
             return Ok(());
         }
         Some(version) => version,
     };
 
     for i in (current_version as usize)..(synchronizers.len() - 1) {
-        log::info!("{}", i);
+        log::debug!(
+            "[{}] starting synchronizer from #{} to #{})",
+            database.clone().name(),
+            i - 1,
+            i
+        );
         let synchronizer = synchronizers[i].clone();
-        synchronizer
-            .execute(bundle.clone(), database.clone(), None)?;
+        synchronizer.execute(bundle.clone(), database.clone(), None)?;
         database.clone().set_schema_version(i as i64)?;
+        log::debug!(
+            "[{}] schema now in sync with schema #{}",
+            database.clone().name(),
+            i
+        );
     }
     Ok(())
 }
