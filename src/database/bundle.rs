@@ -2,7 +2,6 @@ use super::{
     cache::CacheWrapper, error::DatabaseError, manticore::ManticoreWrapper, redis::RedisWrapper,
     scylla::ScyllaWrapper,
 };
-use crate::database::sync::SyncSupport;
 use crate::server_config::database::DatabaseConfig;
 use std::{result::Result, sync::Arc};
 

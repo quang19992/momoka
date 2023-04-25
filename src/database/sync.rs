@@ -1,5 +1,4 @@
 use super::{bundle::Database, error::DatabaseError};
-use async_recursion::async_recursion;
 use futures::future::BoxFuture;
 use std::{future::Future, result::Result, sync::Arc};
 
