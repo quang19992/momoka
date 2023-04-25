@@ -140,7 +140,7 @@ pub async fn execute<T: SyncSupport>(
         Some(version) => version,
     };
 
-    for i in (current_version as usize)..(synchronizers.len() - 1) {
+    for i in (current_version as usize + 1)..synchronizers.len() {
         log::debug!(
             "[{}] starting synchronizer from #{} to #{})",
             database.clone().name(),
