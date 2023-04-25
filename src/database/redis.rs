@@ -30,14 +30,17 @@ impl CacheModule for RedisWrapper {
         key: K,
         value: Vec<u8>,
         expire: usize,
-    ) -> Result<(), CacheError> {
+    ) -> Result<(), DatabaseError> {
         let mut conn = self.conn()?;
         redis::Cmd::pset_ex(Into::<String>::into(key), value, expire).execute(conn.deref_mut());
         Ok(())
     }
 
-    fn get<K: Into<String>>(&self, key: K) -> Result<Vec<u8>, CacheError> {
+    fn get<K: Into<String>>(&self, key: K) -> Result<Vec<u8>, DatabaseError> {
         let mut conn = self.conn()?;
-        Ok(redis::Cmd::get(Into::<String>::into(key)).query(conn.deref_mut())?)
+        match redis::Cmd::get(Into::<String>::into(key)).query(conn.deref_mut()) {
+            Err(err) => Err(DatabaseError::CacheError(Into::<CacheError>::into(err))),
+            Ok(cbor) => Ok(cbor),
+        }
     }
 }

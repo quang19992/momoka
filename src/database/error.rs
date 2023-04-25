@@ -1,3 +1,4 @@
+use super::cache::CacheError;
 use mysql::Error as MysqlError;
 use scylla::{
     cql_to_rust::FromRowError as ScyllaFromRowError,
@@ -12,6 +13,7 @@ pub enum DatabaseError {
     ScyllaFromRowError(ScyllaFromRowError),
     MysqlError(Arc<MysqlError>),
     R2d2Error(String),
+    CacheError(CacheError),
     Other(String),
 }
 
@@ -42,5 +44,11 @@ impl convert::From<MysqlError> for DatabaseError {
 impl convert::From<r2d2::Error> for DatabaseError {
     fn from(err: r2d2::Error) -> Self {
         DatabaseError::R2d2Error(err.to_string())
+    }
+}
+
+impl convert::From<CacheError> for DatabaseError {
+    fn from(err: CacheError) -> Self {
+        DatabaseError::CacheError(err)
     }
 }
