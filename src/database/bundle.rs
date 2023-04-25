@@ -34,6 +34,12 @@ pub async fn sync(bundle: Arc<Database>) -> Result<(), DatabaseError> {
         bundle.clone(), 
         bundle.clone().scylla.clone(),
     );
-    let polls = futures::join!(scylla);
+    let manticore_synchronizers = super::manticore::schema::synchronizers();
+    let manticore = super::sync::execute(
+        manticore_synchronizers.clone().to_vec(),
+        bundle.clone(), 
+        bundle.clone().manticore.clone(),
+    );
+    let polls = futures::join!(scylla, manticore);
     Ok(())
 }

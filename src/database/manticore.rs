@@ -8,6 +8,8 @@ use r2d2::{Error, Pool, PooledConnection};
 use r2d2_mysql::MySqlConnectionManager;
 use std::sync::Arc;
 
+pub mod schema;
+
 const POOL_MAX_SIZE: u32 = 5;
 const SPECIAL_TOKEN: &'static [(&str, &str)] = &[("\\", "\\\\"), ("'", "\\'"), ("\"", "\\\"")];
 
