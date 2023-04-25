@@ -40,6 +40,7 @@ impl CacheWrapper {
         Self { redis }
     }
 
+    #[allow(dead_code)]
     pub fn set<K, V>(&self, key: K, value: &V, expire: usize) -> Result<(), DatabaseError>
     where
         K: std::convert::Into<String>,
@@ -57,6 +58,7 @@ impl CacheWrapper {
         Ok(())
     }
 
+    #[allow(dead_code)]
     pub fn get<K, V>(&self, key: K) -> Result<V, DatabaseError>
     where
         K: std::convert::Into<String>,
