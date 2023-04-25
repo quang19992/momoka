@@ -130,7 +130,8 @@ pub async fn execute<T: SyncSupport>(
         Some(version) => version,
     };
 
-    for i in (current_version as usize)..synchronizers.len() {
+    for i in (current_version as usize)..(synchronizers.len() - 1) {
+        log::info!("{}", i);
         let synchronizer = synchronizers[i].clone();
         synchronizer
             .execute(bundle.clone(), database.clone(), None)?;
