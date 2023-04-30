@@ -5,6 +5,7 @@ use std::sync::Arc;
 
 mod database;
 mod graphql;
+mod model;
 mod server_config;
 
 #[actix_web::main]
