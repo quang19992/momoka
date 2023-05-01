@@ -30,7 +30,7 @@ const INC_SIZE: u8 = 15;
     from_input_with = from_input_value,
     parse_token(String),
 )]
-pub struct Snowflake(u64);
+pub struct Snowflake(pub u64);
 
 /// Output snowflake as a `String` since graphql specs
 ///     had no concept of a 64bits integer.
@@ -141,6 +141,15 @@ impl Snowflake {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn default_method_test() {
+        const SNOWFLAKE_ID: u64 = 277431062064267264;
+        let snowflake = Snowflake(SNOWFLAKE_ID);
+        assert_eq!(snowflake.timestamp(), 1682946622488);
+        assert_eq!(snowflake.cluster_id(), 0);
+        assert_eq!(snowflake.inc(), 0);
+    }
 
     #[test]
     fn generate_with_new_method() {
