@@ -1,6 +1,7 @@
 use actix_web::web;
 
 pub mod context;
+pub mod error;
 mod handler;
 pub mod mutation;
 pub mod query;
