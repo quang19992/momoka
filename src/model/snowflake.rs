@@ -55,7 +55,7 @@ fn from_input_value<S: ScalarValue>(v: &InputValue<S>) -> Result<Snowflake, Grap
     })
 }
 
-/// Get miliseconds sinc MOMOKA_EPOCH
+/// Get miliseconds since MOMOKA_EPOCH
 fn now() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
