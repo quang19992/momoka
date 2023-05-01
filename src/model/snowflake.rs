@@ -30,7 +30,7 @@ const INC_SIZE: u8 = 15;
     from_input_with = from_input_value,
     parse_token(String),
 )]
-pub struct Snowflake(u64);
+pub struct Snowflake(pub u64);
 
 /// Output snowflake as a `String` since graphql specs
 ///     had no concept of a 64bits integer.
@@ -55,7 +55,7 @@ fn from_input_value<S: ScalarValue>(v: &InputValue<S>) -> Result<Snowflake, Grap
     })
 }
 
-/// Get miliseconds sinc MOMOKA_EPOCH
+/// Get miliseconds since MOMOKA_EPOCH
 fn now() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -119,7 +119,7 @@ impl Snowflake {
 
     /// Get timestamp from current snowflake.
     pub fn timestamp(&self) -> u64 {
-        self.0 >> (64 - TIMESTAMP_SIZE)
+        (self.0 >> (64 - TIMESTAMP_SIZE)) + MOMOKA_EPOCH
     }
 
     /// Get cluster id from current snowflake.
@@ -141,6 +141,15 @@ impl Snowflake {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn default_method_test() {
+        const SNOWFLAKE_ID: u64 = 277431062064267264;
+        let snowflake = Snowflake(SNOWFLAKE_ID);
+        assert_eq!(snowflake.timestamp(), 1682946622488);
+        assert_eq!(snowflake.cluster_id(), 0);
+        assert_eq!(snowflake.inc(), 0);
+    }
 
     #[test]
     fn generate_with_new_method() {
