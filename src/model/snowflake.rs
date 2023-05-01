@@ -119,7 +119,7 @@ impl Snowflake {
 
     /// Get timestamp from current snowflake.
     pub fn timestamp(&self) -> u64 {
-        self.0 >> (64 - TIMESTAMP_SIZE)
+        (self.0 >> (64 - TIMESTAMP_SIZE)) + MOMOKA_EPOCH
     }
 
     /// Get cluster id from current snowflake.
