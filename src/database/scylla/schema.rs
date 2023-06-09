@@ -82,6 +82,7 @@ fn v_2() -> Synchronizer {
         r#"
         CREATE TABLE title (
             title_id BIGINT PRIMARY KEY,
+            status TEXT,
             name TEXT,
             description TEXT,
             category FROZEN<SET<BIGINT>>
@@ -91,7 +92,11 @@ fn v_2() -> Synchronizer {
         CREATE TABLE publication (
             title_id BIGINT,
             publication_id BIGINT,
+            publisher_id BIGINT,
+            status TEXT,
             name TEXT,
+            volume BIGINT,
+            cover IMAGE,
             metadata FROZEN<MAP<TEXT, TEXT>>,
             PRIMARY KEY ((title_id), publication_id)
         );
